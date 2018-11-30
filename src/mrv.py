@@ -1,5 +1,3 @@
-import datasets
-import time
 
 def getConstraints(var):
 	boxCoords = {
@@ -56,15 +54,3 @@ def select_unassigned_variable(grid):
 		
 	return sorted(filter(lambda x: len(x[1]) > 1, domains.items()), key=lambda x: len(x[1])) 
 
-def main():
-	start_time = time.time()
-	puz = datasets.sudoku_easy
-	vars = select_unassigned_variable(puz)
-	print("Length of vars: " + str(len(vars)))
-	print("1st: " + str(vars[0]))
-	print("2nd: " + str(vars[1]))
-	print("Last: " + str(vars[-1]))
-	print("--- %s seconds ---" % (time.time() - start_time))
-
-if __name__ == '__main__':
-	main()
