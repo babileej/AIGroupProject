@@ -1,8 +1,9 @@
 import datasets
-from solver import solved
+from solver import misplaced_tiles
 import math
 import numpy as np
 from timeit import Timer
+from mrv import select_unassigned_variable
 
 def getRemainingValues(row, col, box):
     # check row, col and box of the cell
@@ -42,14 +43,17 @@ def backtrackingSearch(grid, i):
     for row in res:
         print(row)
     print()
-    for row in gridSol:
-        print(row)
+    # print("Misplaced: ", misplaced_tiles(datasets.res))
+    # for row in gridSol:
+    #     print(row)
     return res
 
 def backtrack(grid, depth):
+    print(depth)
     if depth == 81:
         return grid
     successors = generateSuccessors(grid)
+    # successors = select_unassigned_variable(grid)
     successor = []
     if len(successors):
         successor = successors[0]
@@ -65,7 +69,7 @@ def backtrack(grid, depth):
 
 if __name__ == "__main__":
     i = 0
-    grid = datasets.sudoku_easy
+    grid = datasets.actual_sudoku_easy
     gridSol = datasets.sudoku_easy_solution
     for row in grid:
         for cell in row:

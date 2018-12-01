@@ -1,5 +1,6 @@
 import datasets
 import mrv
+from annealing import sim_annealing
 
 def main():
 	puz = datasets.sudoku_easy
@@ -10,4 +11,4 @@ def main():
 	print("Last: " + str(vars[-1]))
 
 if __name__ == '__main__':
-	main()
+	sim_annealing(datasets.sudoku_easy)
