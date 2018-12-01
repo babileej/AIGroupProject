@@ -1,4 +1,3 @@
-
 def getConstraints(var):
 	boxCoords = {
 		0 : [x for x in range(0, 3)],
@@ -32,25 +31,31 @@ def getConstraints(var):
 
 def select_unassigned_variable(grid):
 	domains = {}
-	
+	degrees = {}
 	i = 0
 	while i < len(grid):
 		j = 0
 		while j < len(grid[i]):
 			variable = (i, j)
-			if (grid[i][j] > 0):
-				domains[variable] = [grid[i][j]]
-			else:
+			if (grid[i][j] == 0):
+				degree_count = 0
 				constraints = getConstraints(variable)
 				domain = [x for x in range(1, 10)]
 				for constraint in constraints:
 					row, col = constraint
-					if grid[row][col] in domain:
-						domain.remove(grid[row][col])
+					val = grid[row][col]
+					if val == 0:
+						degree_count += 1
+					elif val in domain:
+						domain.remove(val)
 					domains[variable] = domain
-				
+					degrees[variable] = degree_count
 			j += 1
 		i += 1
-		
-	return sorted(filter(lambda x: len(x[1]) > 1, domains.items()), key=lambda x: len(x[1])) 
 
+	result = sorted(domains.items(), key=lambda x: len(x[1]))[0]
+	min_domain = len(result[1])
+	minimums = [k for k in domains if len(domains[k]) == min_domain]
+	degs = [(mi, degrees[mi]) for mi in minimums]
+	deg_max = max(degs, key=lambda x: x[1])
+	return [(deg_max[0], domains[deg_max[0]])]
