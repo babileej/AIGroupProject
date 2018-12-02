@@ -3,7 +3,7 @@ from timeit import Timer
 import numpy as np
 import pprint
 import solver
-from datasets import sudoku_easy, sudoku_medium, sudoku_hard
+from datasets import sudoku_easy, sudoku_medium, sudoku_hard, sudoku_impossible
 
 
 # I use a 1 based reference for all columns/rows (so 1-9 values vs 0-8). I can change that if needed.
@@ -312,6 +312,10 @@ if (len(sys.argv) > 1):
         arc3.RunArc3(sudoku_medium)
     elif (arg == "hard"):
         arc3.RunArc3(sudoku_hard)
+    elif (arg == "impossible"):
+        pprint.pprint(sudoku_impossible)
+        arc3.RunArc3(sudoku_impossible)
+        pprint.pprint(arc3.board)
     else:
         arc3.RunArc3(sudoku_easy)
     if (solver.misplaced_tiles(arc3.board) > 0):
