@@ -1,6 +1,8 @@
+import time
 import sys
 import numpy as np
 import pprint
+import solver
 from datasets import sudoku_easy, sudoku_medium, sudoku_hard
 
 
@@ -10,27 +12,18 @@ from datasets import sudoku_easy, sudoku_medium, sudoku_hard
 # basically the scratch paper where all the pencil marks are made.
 
 # TO IMPLEMENT:
-    ## Make a global flag to track an ARC-3 error (whenever domain size = 0)
-    ## Write 'Singletons' constraint => If only one tile in a Row/Column/Sector owns value X in it's domain, that tile IS X
-    
     ## Refactor Existing code
         ## Move basic domain reduction methods to a single group  method
         ## Add flags in loop for each method return
-        ## Add check for domain = 1 inside 'ReduceDomainValue
         ## Change main loop to:
             ## Do basic dmoain reduce loop (w/ a write call whenver domain reduced to 1)
             ## Check for 'Singletons' (And write when found)
 
     ## Add some changes to increase efficiency
         ## Each successful write called from the 'Singletons' check will trigger domain reduction for that tile
-        ## Each Domain Reduction will check for domain reduced to 1, and will write if so.
         ## Writes called from the Domain Reduction in this way will not cascade further (to prevent stack issues)
 
     ## Add a domain_size array, to track size better. Would require a write everytime we reduce domain, BUT would increase read efficiency a ton. Besides, each domain reduction does a read so...
-
-    ## Consider adding pair-wise constraint. Probably won't have time for this, but would increase the power of the algorithm by quite a bit. Might even be able to solve Hard w/out any guessing
-
-    ## Consider optimizing Singleton check to instead sum the domain_sets arrays for a group, to know singletons after a single matrix instruction. Probably won't have time for this.
 
 
 
@@ -52,6 +45,16 @@ else:
 # This is the domain sets.
 domain_sets = np.array([[[k+1 for k in range(9)] for j in range(9)] for i in range(9)])
 
+# This tracks the domain_size... makes it easier/faster and we have the memory to spare
+domain_size = np.array([[9 for j in xrange(9)] for i in xrange(9)])
+
+
+def IsARC3Error():
+    for row in range(9):
+        for col in range(9):
+            if (domain_size[row,col] <= 0):
+                return True
+    return False
 
 # Gets domain size of a particular tile. Could be used by MRV
 def DomainSize(row, col):
@@ -65,6 +68,9 @@ def DomainSize(row, col):
 def ReduceDomainValue(row, col, val):
     if domain_sets[row-1,col-1,val-1] != 0:
         domain_sets[row-1,col-1,val-1] = 0
+        domain_size[row-1,col-1] -= 1
+        if (domain_size[row-1,col-1] == 1):
+            WritePenMark(row,col)
         return True
     return False
 
@@ -108,6 +114,36 @@ def ReduceDomainSelf(row,col,val):
                 updated = True
     return updated
 
+def BasicDomainReductions(row, col, val):
+    updatedRow = ReduceDomainByRow(row, val, col)
+    updatedCol = ReduceDomainByCol(col, val, row)
+    updatedSector = ReduceDomainBySector(row,col,val)
+    updatedSelf = ReduceDomainSelf(row,col,val)
+    return (updatedRow or updatedCol or updatedSector or updatedSelf)
+
+
+def SingletonRowCheck(row):
+    singletonRow = np.array([0 for k in xrange(9)])
+    for col in range(1,10):
+       singletonRow += domain_sets[row-1,col-1]
+
+    for index in range(1, 10):
+        if (singletonRow[index-1] == index):
+            for col in range(1,10):
+                if (board[row-1][col-1] == 0) and (domain_sets[row-1,col-1,index-1] != 0):
+                    WritePenMarkWithCascade(row,col,index)
+
+def SingletonColCheck(col):
+    singletonCol = np.array([0 for k in xrange(9)])
+    for row in range(1,10):
+       singletonCol += domain_sets[row-1,col-1]
+
+    for index in range(1, 10):
+        if (singletonCol[index-1] == index):
+            for row in range(1,10):
+                if (board[row-1][col-1] == 0) and (domain_sets[row-1,col-1,index-1] != 0):
+                    WritePenMarkWithCascade(row,col,index)
+
 # The following methods are just print methods for debug/ metrics
 def PrintDomain(row, col):
     print(domain_sets[row-1,col-1,:])
@@ -120,6 +156,10 @@ def PrintDomainCol(col):
     for row in range(1,10):
         PrintDomain(row, col)
 
+def PrintDomainSector(start_row, start_col):
+    for row in range(start_row, start_row+3):
+        for col in range(start_col, start_col+3):
+            pprint.pprint(domain_sets[row-1,col-1,:])
 
 # Used to make a mark on our board once we've reduced the domain of the tile to 1 (aka, found the solution to the tile)
 def WritePenMark(row, col):
@@ -129,6 +169,10 @@ def WritePenMark(row, col):
             board[row-1][col-1] = val
             return
 
+def WritePenMarkWithCascade(row, col, val):
+    board[row-1][col-1] = val
+    BasicDomainReductions(row,col,val)
+
 # This is the main ARC-3 Function. Continues to run until it can no longer reduce the domains with the implmented constraints
 def RunArc3Iteration():
     change = False
@@ -136,17 +180,131 @@ def RunArc3Iteration():
         for col in range(1,10):
             pen_mark = board[row-1][col-1]
             if pen_mark != 0:
-
                 #We have a solution for this tile, so run all domain reductions
-                if (ReduceDomainByCol(col, pen_mark, row)):
-                    change = True
-                if (ReduceDomainByRow(row, pen_mark, col)):
-                    change = True
-                if (ReduceDomainBySector(row, col, pen_mark)):
-                    change = True
-                if (ReduceDomainSelf(row, col, pen_mark)):
-                    change = True
+                change = (BasicDomainReductions(row, col, pen_mark) or RunSingletonChecks() or RunTupleChecks() or RunPairwiseChecks())
+
     return change
+
+def RunSingletonChecks():
+    updated = False
+    for row in range(1,10):
+        if (SingletonRowCheck(row)):
+            updated = True
+    
+    for col in range(1,10):
+        if (SingletonColCheck(col)):
+            updated = True
+
+    return updated
+
+
+def RunTupleChecks():
+    updated = False
+
+    for row in range(1,10,3):
+        for col in range(1,10,3):
+            updated = TupleCheckOnSector(row,col)
+    return updated
+
+def RunPairwiseChecks():
+    updated = False
+
+    for row in range(1,10,3):
+        for col in range(1,10,3):
+            updated = PairwiseCheckOnSector(row,col)
+    return updated   
+
+
+def TupleCheckOnSector(start_row,start_col):
+    tuple_check = np.array([0 for k in xrange(9)])
+    updated = False
+
+    for row in range(start_row, start_row+3):
+        for col in range(start_col, start_col+3):
+            tuple_check += domain_sets[row-1,col-1]
+
+    for index in range(1,10):
+        if (tuple_check[index-1] == index*2):
+            for row in range(start_row, start_row+3):
+                count = 0
+                for col in range(start_col, start_col+3):           
+                    if (domain_sets[row-1,col-1,index-1] != 0):
+                        count += 1
+                if (count == 2):
+                    updated = ReduceDomainByRowTuple(row, index, start_col)
+
+            
+            for col in range(start_col, start_col+3):
+                count = 0
+                for row in range(start_row, start_row+3):           
+                    if (domain_sets[row-1,col-1,index-1] != 0):
+                        count += 1
+                if (count == 2):
+                    updated = ReduceDomainByColTuple(col, index, start_row)
+
+    return updated
+
+
+def PairwiseCheckOnSector(start_row, start_col):
+    tuple_check = np.array([0 for k in xrange(9)])
+    updated = False
+
+    for row in range(start_row, start_row+3):
+        for col in range(start_col, start_col+3):
+            tuple_check += domain_sets[row-1,col-1]
+
+    for index_1 in range(1,9):
+        if (tuple_check[index_1-1] == index_1*2):
+            for index_2 in range(index_1+1,10):
+                if (index_1 != index_2 and tuple_check[index_2-1] == index_2*2):
+                    count = 0
+                    for row in range(start_row, start_row+3):
+                        for col in range(start_col, start_col+3):           
+                            if (domain_sets[row-1,col-1,index_1-1] != 0 and domain_sets[row-1,col-1,index_2-1] != 0):
+                                count += 1
+                    if (count == 2):
+                        updated = ReduceDomainByPairwise(start_row, start_col, index_1, index_2)
+    return updated
+
+
+
+def ReduceDomainByPairwise(start_row, start_col, index_1, index_2):
+    updated = False
+    for row in range(start_row, start_row+3):
+        for col in range(start_col, start_col+3):
+            if (domain_sets[row-1,col-1,index_1-1] != 0):
+                updated = ReduceDomainByPairwiseSelf(row,col, index_1, index_2)
+    return updated
+
+
+def ReduceDomainByPairwiseSelf(row, col, index_1, index_2):
+    updated = False
+    for x in range(1,10):
+        if (x != index_1 and x != index_2):
+            if (ReduceDomainValue(row,col,x)):
+                updated = True
+    return updated
+
+
+def ReduceDomainByRowTuple(row, val, skip_three):
+    updated = False
+    for col in range(1,10):
+        if (col == skip_three or col == (skip_three + 1) or col == (skip_three + 2)):
+            col += 3
+        elif (ReduceDomainValue(row,col,val)):
+            updated = True
+    return updated
+
+
+def ReduceDomainByColTuple(col, val, skip_three):
+    updated = False
+    for row in range(1,10):
+        if (row == skip_three or row == (skip_three + 1) or row == (skip_three + 2)):
+            row += 3
+        elif (ReduceDomainValue(row,col,val)):
+            updated = True
+    return updated
+
 
 # This loops through the domain_sets, finding all tiles that have been reduced to domain size 1, and mark them on the board if they aren't already
 def WritePenMarks():
@@ -163,17 +321,11 @@ def WritePenMarks():
 def RunArc3():
     cont = True
     while (cont):
-        if RunArc3Iteration():
-            WritePenMarks()
-        else:
-            cont = False
-
+        arc = RunArc3Iteration()
+        write = WritePenMarks()
+        cont =  (arc and write)
 
 # Execution Code. Should probably put in a main method...
-pprint.pprint(board)
 RunArc3()
-print('\n')
-pprint.pprint(board)
-RunArc3()
-print('\n')
-pprint.pprint(board)
+
+
