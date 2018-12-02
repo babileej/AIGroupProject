@@ -1,8 +1,6 @@
-import time
 import sys
 import numpy as np
 import pprint
-import solver
 from datasets import sudoku_easy, sudoku_medium, sudoku_hard
 
 
