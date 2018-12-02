@@ -50,12 +50,12 @@ else:
 
 
 # This is the domain sets.
-domain_sets = np.array([[[k+1 for k in xrange(9)] for j in xrange(9)] for i in xrange(9)])
+domain_sets = np.array([[[k+1 for k in range(9)] for j in range(9)] for i in range(9)])
 
 
 # Gets domain size of a particular tile. Could be used by MRV
 def DomainSize(row, col):
-    size = 9;
+    size = 9
     for x in range(9):
         if domain_sets[row-1,col-1,x] == 0:
             size-= 1
@@ -87,8 +87,8 @@ def ReduceDomainByRow(row, val, skip):
 # Reduces the domain of an entire sector by the value passed in, except for the specified tile
 def ReduceDomainBySector(row,col,val):
     updated = False
-    st_row_pos = 3 * ((row - 1)/3) + 1
-    st_col_pos = 3 * ((col - 1)/3) + 1
+    st_row_pos = 3 * ((row - 1)//3) + 1
+    st_col_pos = 3 * ((col - 1)//3) + 1
 
     for row_index in range(st_row_pos, st_row_pos + 3):
         for col_index in range(st_col_pos, st_col_pos + 3):
