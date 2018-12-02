@@ -315,8 +315,8 @@ if (len(sys.argv) > 1):
     else:
         arc3.RunArc3(sudoku_easy)
     if (solver.misplaced_tiles(arc3.board) > 0):
-        print "NOT SOLVED"
+        print("NOT SOLVED")
     else:
-        print "SOLVED"
+        print("SOLVED")
 
 

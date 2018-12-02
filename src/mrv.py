@@ -1,3 +1,5 @@
+import solver
+
 def getConstraints(var):
 	boxCoords = {
 		0 : [x for x in range(0, 3)],
@@ -28,6 +30,21 @@ def getConstraints(var):
 	constraints += box
 	
 	return constraints
+
+def suv(grid, arc3):
+	if solver.misplaced_tiles(grid) == 0:
+		return []
+	else:
+		ind = arc3.domain_size.flatten()
+		m = min(i for i in ind if i > 1)
+		index = np.where(ind==m)[0][0]
+		row = index // 8
+		col = index % 8
+		domain = []
+		for i in arc3.domain_sets[row, col, :]:
+			if i > 0:
+				domain.append(i)
+		return [((row, col), domain)]
 
 def select_unassigned_variable(grid):
 	domains = {}

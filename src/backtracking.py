@@ -3,7 +3,7 @@ from solver import misplaced_tiles
 import math
 import numpy as np
 from timeit import Timer
-from mrv import select_unassigned_variable
+from mrv import suv
 from arc3 import ARC3
 
 def getRemainingValues(row, col, box):
@@ -53,13 +53,16 @@ def backtrack(grid, depth):
     # print(depth)
     if depth == 81:
         return grid
+    a = ARC3()
+    a.RunArc3(grid)
+    successors = suv(a.board, a)
     # successors = generateSuccessors(grid)
-    successors = select_unassigned_variable(grid)
+    #successors = select_unassigned_variable(grid)
     successor = []
     if len(successors):
         successor = successors[0]
     else:
-        return []
+        return a.board
     for i in successor[1]:
         tempGrid = [row[:] for row in grid]
         tempGrid[successor[0][0]][successor[0][1]] = i
@@ -71,7 +74,7 @@ def backtrack(grid, depth):
 if __name__ == "__main__":
     i = 0
     grid = datasets.sudoku_hard
-    gridSol = datasets.sudoku_easy_solution
+    gridSol = datasets.sudoku_hard_solution
     for row in grid:
         for cell in row:
             if cell:
