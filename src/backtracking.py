@@ -6,6 +6,8 @@ from timeit import Timer
 from mrv import select_unassigned_variable
 from arc3 import RunArc3
 
+iterations = 0
+
 def getRemainingValues(row, col, box):
     # check row, col and box of the cell
     options = [i for i in range(1,10)]
@@ -51,8 +53,10 @@ def backtrackingSearch(grid, i):
 
 def backtrack(grid, depth):
     # print(depth)
+    global iterations
     if depth == 81:
         return grid
+    iterations += 1
     # successors = generateSuccessors(grid)
     successors = select_unassigned_variable(grid)
     successor = []
@@ -70,8 +74,10 @@ def backtrack(grid, depth):
 
 if __name__ == "__main__":
     i = 0
-    grid = datasets.sudoku_hard
-    gridSol = datasets.sudoku_easy_solution
+    board = datasets.sudoku_easy
+    grid = [(row[:]) for row in board]
+    # RunArc3(grid)
+    # gridSol = datasets.sudoku_easy_solution
     for row in grid:
         for cell in row:
             if cell:
@@ -82,3 +88,4 @@ if __name__ == "__main__":
     toTime = Timer(lambda: backtrackingSearch(grid, i))
     time = toTime.timeit(number=1)
     print("Time: ", round(time, 3), "s")
+    print("IT: ", iterations)

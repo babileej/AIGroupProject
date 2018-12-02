@@ -170,10 +170,10 @@ def RunArc3():
 
 
 # Execution Code. Should probably put in a main method...
-pprint.pprint(board)
-RunArc3()
-print('\n')
-pprint.pprint(board)
-RunArc3()
-print('\n')
-pprint.pprint(board)
+# pprint.pprint(board)
+# RunArc3()
+# print()
+# pprint.pprint(board)
+# RunArc3()
+# print('\n')
+# pprint.pprint(board)
