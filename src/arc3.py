@@ -1,6 +1,8 @@
 import sys
+from timeit import Timer
 import numpy as np
 import pprint
+import solver
 from datasets import sudoku_easy, sudoku_medium, sudoku_hard
 
 
@@ -77,7 +79,6 @@ class ARC3:
     # Reduces the domain of a tile by all the values NOT EQUAL to the one passed in
     def ReduceDomainSelf(self,row,col,val):
         updated = False
-
         for x in range(1,10):
             if x != val:
                 if (self.ReduceDomainValue(row,col,x)):
@@ -93,6 +94,7 @@ class ARC3:
 
 
     def SingletonRowCheck(self,row):
+        updated = False
         singletonRow = np.array([0 for k in range(9)])
         for col in range(1,10):
            singletonRow += self.domain_sets[row-1,col-1]
@@ -102,8 +104,11 @@ class ARC3:
                 for col in range(1,10):
                     if (self.board[row-1][col-1] == 0) and (self.domain_sets[row-1,col-1,index-1] != 0):
                         self.WritePenMarkWithCascade(row,col,index)
+                        updated = True
+        return updated
 
     def SingletonColCheck(self,col):
+        updated = False
         singletonCol = np.array([0 for k in range(9)])
         for row in range(1,10):
            singletonCol += self.domain_sets[row-1,col-1]
@@ -113,6 +118,8 @@ class ARC3:
                 for row in range(1,10):
                     if (self.board[row-1][col-1] == 0) and (self.domain_sets[row-1,col-1,index-1] != 0):
                         self.WritePenMarkWithCascade(row,col,index)
+                        updated = True
+        return updated
 
     # The following methods are just print methods for debug/ metrics
     def PrintDomain(self, row, col):
@@ -151,8 +158,8 @@ class ARC3:
                 pen_mark = self.board[row-1][col-1]
                 if pen_mark != 0:
                     #We have a solution for this tile, so run all domain reductions
-                    change = (self.BasicDomainReductions(row, col, pen_mark) or self.RunSingletonChecks() or self.RunTupleChecks() or self.RunPairwiseChecks())
-
+                    if (self.BasicDomainReductions(row, col, pen_mark) or self.RunSingletonChecks() or self.RunTupleChecks() or self.RunPairwiseChecks()):
+                        change = True
         return change
 
     def RunSingletonChecks(self):
@@ -170,38 +177,40 @@ class ARC3:
 
     def RunTupleChecks(self):
         updated = False
-
         for row in range(1,10,3):
             for col in range(1,10,3):
-                updated = self.TupleCheckOnSector(row,col)
+                if (self.TupleCheckOnSector(row,col)):
+                    updated = True
         return updated
 
     def RunPairwiseChecks(self):
         updated = False
-
         for row in range(1,10,3):
             for col in range(1,10,3):
-                updated = self.PairwiseCheckOnSector(row,col)
+                if (self.PairwiseCheckOnSector(row,col)):
+                    updated = True
         return updated   
 
 
     def TupleCheckOnSector(self, start_row,start_col):
         tuple_check = np.array([0 for k in range(9)])
-        updated = False
+        updated_col = False
+        updated_row = False
 
         for row in range(start_row, start_row+3):
             for col in range(start_col, start_col+3):
                 tuple_check += self.domain_sets[row-1,col-1]
 
         for index in range(1,10):
-            if (tuple_check[index-1] == index*2):
+            t_sum = tuple_check[index - 1]
+            if (t_sum == index*2 or t_sum == index*3):
                 for row in range(start_row, start_row+3):
                     count = 0
                     for col in range(start_col, start_col+3):           
                         if (self.domain_sets[row-1,col-1,index-1] != 0):
                             count += 1
-                    if (count == 2):
-                        updated = self.ReduceDomainByRowTuple(row, index, start_col)
+                    if (count == (t_sum // index)):
+                        updated_row = self.ReduceDomainByRowTuple(row, index, start_col)
 
             
                 for col in range(start_col, start_col+3):
@@ -209,10 +218,9 @@ class ARC3:
                     for row in range(start_row, start_row+3):           
                         if (self.domain_sets[row-1,col-1,index-1] != 0):
                             count += 1
-                    if (count == 2):
-                        updated = self.ReduceDomainByColTuple(col, index, start_row)
-
-        return updated
+                    if (count == (t_sum // index)):
+                        updated_col = self.ReduceDomainByColTuple(col, index, start_row)
+        return updated_row or updated_col
 
 
     def PairwiseCheckOnSector(self, start_row, start_col):
@@ -293,7 +301,7 @@ class ARC3:
         cont = True
         while (cont):
             arc = self.RunArc3Iteration()
-            write = self.WritePenMarks()
+            write = True #self.WritePenMarks()
             cont =  (arc and write)
 
 # Should change to pass in a board, right? Until we hook everything up... I'll just leave this for testing
@@ -306,5 +314,9 @@ if (len(sys.argv) > 1):
         arc3.RunArc3(sudoku_hard)
     else:
         arc3.RunArc3(sudoku_easy)
+    if (solver.misplaced_tiles(arc3.board) > 0):
+        print "NOT SOLVED"
+    else:
+        print "SOLVED"
 
 

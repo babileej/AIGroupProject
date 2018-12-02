@@ -4,7 +4,7 @@ import math
 import numpy as np
 from timeit import Timer
 from mrv import select_unassigned_variable
-from arc3 import RunArc3
+from arc3 import ARC3
 
 def getRemainingValues(row, col, box):
     # check row, col and box of the cell
