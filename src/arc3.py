@@ -1,8 +1,6 @@
-import time
 import sys
 import numpy as np
 import pprint
-import solver
 from datasets import sudoku_easy, sudoku_medium, sudoku_hard
 
 
@@ -46,7 +44,7 @@ else:
 domain_sets = np.array([[[k+1 for k in range(9)] for j in range(9)] for i in range(9)])
 
 # This tracks the domain_size... makes it easier/faster and we have the memory to spare
-domain_size = np.array([[9 for j in xrange(9)] for i in xrange(9)])
+domain_size = np.array([[9 for j in range(9)] for i in range(9)])
 
 
 def IsARC3Error():
@@ -123,7 +121,7 @@ def BasicDomainReductions(row, col, val):
 
 
 def SingletonRowCheck(row):
-    singletonRow = np.array([0 for k in xrange(9)])
+    singletonRow = np.array([0 for k in range(9)])
     for col in range(1,10):
        singletonRow += domain_sets[row-1,col-1]
 
@@ -134,7 +132,7 @@ def SingletonRowCheck(row):
                     WritePenMarkWithCascade(row,col,index)
 
 def SingletonColCheck(col):
-    singletonCol = np.array([0 for k in xrange(9)])
+    singletonCol = np.array([0 for k in range(9)])
     for row in range(1,10):
        singletonCol += domain_sets[row-1,col-1]
 
@@ -216,7 +214,7 @@ def RunPairwiseChecks():
 
 
 def TupleCheckOnSector(start_row,start_col):
-    tuple_check = np.array([0 for k in xrange(9)])
+    tuple_check = np.array([0 for k in range(9)])
     updated = False
 
     for row in range(start_row, start_row+3):
@@ -246,7 +244,7 @@ def TupleCheckOnSector(start_row,start_col):
 
 
 def PairwiseCheckOnSector(start_row, start_col):
-    tuple_check = np.array([0 for k in xrange(9)])
+    tuple_check = np.array([0 for k in range(9)])
     updated = False
 
     for row in range(start_row, start_row+3):
