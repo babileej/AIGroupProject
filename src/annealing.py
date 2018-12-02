@@ -65,7 +65,7 @@ def fill_zeros(puzzle):
 
  
 
-def sim_annealing(puzzle, T=0.5, Tmin=0.1, coolingRate=0.999999, verbose=False):
+def sim_annealing(puzzle, T=0.95, Tmin=0.1, coolingRate=0.999999, verbose=False):
     currentState     = np.array(puzzle)
     mutableIndexPool = mutable_indeces(puzzle)
 
