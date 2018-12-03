@@ -29,7 +29,7 @@ def getConstraints(var):
 	
 	return constraints
 
-def select_unassigned_variable(grid):
+def select_unassigned_variable(grid, domain_sets):
 	domains = {}
 	degrees = {}
 	i = 0
@@ -40,7 +40,7 @@ def select_unassigned_variable(grid):
 			if (grid[i][j] == 0):
 				degree_count = 0
 				constraints = getConstraints(variable)
-				domain = [x for x in range(1, 10)]
+				domain = domain_sets[i][j][:]
 				for constraint in constraints:
 					row, col = constraint
 					val = grid[row][col]
