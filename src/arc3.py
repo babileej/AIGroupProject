@@ -13,6 +13,7 @@ from datasets import sudoku_easy, sudoku_medium, sudoku_hard
 
 class ARC3:
     board = sudoku_easy
+    iterations = 0
 
     # This is the domain sets.
     domain_sets = np.array([[[k+1 for k in range(9)] for j in range(9)] for i in range(9)])
@@ -27,6 +28,13 @@ class ARC3:
                 if (self.domain_size[row,col] <= 0):
                     return True
         return False
+
+    def IsSolved(self):
+        for row in range(9):
+            for col in range(9):
+                if (self.domain_size[row,col] != 1):
+                    return False
+        return True
 
     # Gets domain size of a particular tile. Could be used by MRV
     def DomainSize(self, row, col):
@@ -297,23 +305,37 @@ class ARC3:
 
     # This method is runs the ARC-3 function until a solution is found or no updates were made over an entire pass
     def RunArc3(self, _board):
+        self.iterations = 0;
         self.board = _board
         cont = True
         while (cont):
+            self.iterations += 1
             arc = self.RunArc3Iteration()
-            write = True #self.WritePenMarks()
-            cont =  (arc and write)
+            if (self.IsSolved()):
+                cont = False
+            else:
+                cont = arc
+        return self.iterations
 
 # Should change to pass in a board, right? Until we hook everything up... I'll just leave this for testing
 if (len(sys.argv) > 1):
     arc3 = ARC3()
     arg = sys.argv[1]
     if (arg == "medium"):
-        arc3.RunArc3(sudoku_medium)
+        toTime = Timer(lambda: arc3.RunArc3(sudoku_medium))
+        time = toTime.timeit(number=1)
+        print("Time: ", round(time, 3), "s")
+        print("Iterations: ", arc3.iterations)
     elif (arg == "hard"):
-        arc3.RunArc3(sudoku_hard)
+        toTime = Timer(lambda: arc3.RunArc3(sudoku_hard))
+        time = toTime.timeit(number=1)
+        print("Time: ", round(time, 3), "s")
+        print("Iterations: ", arc3.iterations)
     else:
-        arc3.RunArc3(sudoku_easy)
+        toTime = Timer(lambda: arc3.RunArc3(sudoku_easy))
+        time = toTime.timeit(number=1)
+        print("Time: ", round(time, 3), "s")
+        print("Iterations: ", arc3.iterations)
     if (solver.misplaced_tiles(arc3.board) > 0):
         print("NOT SOLVED")
     else:
