@@ -1,3 +1,5 @@
+import numpy as np
+
 def getConstraints(var):
 	boxCoords = {
 		0 : [x for x in range(0, 3)],
@@ -47,7 +49,8 @@ def select_unassigned_variable(grid, domain_sets):
 					if val == 0:
 						degree_count += 1
 					elif val in domain:
-						domain.remove(val)
+						new_a = np.delete(domain, domain.index(val))
+						domain = new_a
 					domains[variable] = domain
 					degrees[variable] = degree_count
 			j += 1

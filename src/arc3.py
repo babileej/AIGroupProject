@@ -305,18 +305,18 @@ class ARC3:
             cont =  (arc and write)
 
 # Should change to pass in a board, right? Until we hook everything up... I'll just leave this for testing
-if (len(sys.argv) > 1):
-    arc3 = ARC3()
-    arg = sys.argv[1]
-    if (arg == "medium"):
-        arc3.RunArc3(sudoku_medium)
-    elif (arg == "hard"):
-        arc3.RunArc3(sudoku_hard)
-    else:
-        arc3.RunArc3(sudoku_easy)
-    if (solver.misplaced_tiles(arc3.board) > 0):
-        print("NOT SOLVED")
-    else:
-        print("SOLVED")
+# if (len(sys.argv) > 1):
+#     arc3 = ARC3()
+#     arg = sys.argv[1]
+#     if (arg == "medium"):
+#         arc3.RunArc3(sudoku_medium)
+#     elif (arg == "hard"):
+#         arc3.RunArc3(sudoku_hard)
+#     else:
+#         arc3.RunArc3(sudoku_easy)
+#     if (solver.misplaced_tiles(arc3.board) > 0):
+#         print("NOT SOLVED")
+#     else:
+#         print("SOLVED")
 
 

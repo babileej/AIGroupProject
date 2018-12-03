@@ -84,7 +84,7 @@ def main():
     if len(sys.argv) > 1:
         grid = puzzles[sys.argv[1]]
     arc = ARC3()
-    arc.RunArc3(grid)
+    # arc.RunArc3(grid)
     for row in grid:
         for cell in row:
             if cell:
