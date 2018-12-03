@@ -14,6 +14,7 @@ from datasets import sudoku_easy, sudoku_medium, sudoku_hard
 class ARC3:
     board = sudoku_easy
     iterations = 0
+    skip = False
 
     # This is the domain sets.
     domain_sets = np.array([[[k+1 for k in range(9)] for j in range(9)] for i in range(9)])
@@ -50,6 +51,7 @@ class ARC3:
             self.domain_sets[row-1,col-1,val-1] = 0
             self.domain_size[row-1,col-1] -= 1
             if (self.domain_size[row-1,col-1] == 1):
+                #if (self.skip == False):
                 self.WritePenMark(row,col)
             return True
         return False
@@ -166,8 +168,12 @@ class ARC3:
                 pen_mark = self.board[row-1][col-1]
                 if pen_mark != 0:
                     #We have a solution for this tile, so run all domain reductions
-                    if (self.BasicDomainReductions(row, col, pen_mark) or self.RunSingletonChecks() or self.RunTupleChecks() or self.RunPairwiseChecks()):
-                        change = True
+                    if (self.skip == False):
+                        if (self.BasicDomainReductions(row, col, pen_mark) or self.RunSingletonChecks() or self.RunTupleChecks() or self.RunPairwiseChecks()):
+                            change = True
+                    else:
+                        if (self.BasicDomainReductions(row, col, pen_mark)):
+                            change = True
         return change
 
     def RunSingletonChecks(self):
@@ -304,17 +310,22 @@ class ARC3:
         return True
 
     # This method is runs the ARC-3 function until a solution is found or no updates were made over an entire pass
-    def RunArc3(self, _board):
+    def RunArc3(self, _board, skip):
         self.iterations = 0;
         self.board = _board
-        cont = True
-        while (cont):
-            self.iterations += 1
-            arc = self.RunArc3Iteration()
-            if (self.IsSolved()):
-                cont = False
-            else:
-                cont = arc
+        self.skip = skip
+        if (self.skip == False):
+            cont = True
+            while (cont):
+                self.iterations += 1
+                arc = self.RunArc3Iteration()
+                if (self.IsSolved()):
+                    cont = False
+                else:
+                    cont = arc
+        else:
+            self.RunArc3Iteration()
+        
         return self.iterations
 
 # Should change to pass in a board, right? Until we hook everything up... I'll just leave this for testing
@@ -322,17 +333,17 @@ if (len(sys.argv) > 1):
     arc3 = ARC3()
     arg = sys.argv[1]
     if (arg == "medium"):
-        toTime = Timer(lambda: arc3.RunArc3(sudoku_medium))
+        toTime = Timer(lambda: arc3.RunArc3(sudoku_medium, True))
         time = toTime.timeit(number=1)
         print("Time: ", round(time, 3), "s")
         print("Iterations: ", arc3.iterations)
     elif (arg == "hard"):
-        toTime = Timer(lambda: arc3.RunArc3(sudoku_hard))
+        toTime = Timer(lambda: arc3.RunArc3(sudoku_hard, True))
         time = toTime.timeit(number=1)
         print("Time: ", round(time, 3), "s")
         print("Iterations: ", arc3.iterations)
     else:
-        toTime = Timer(lambda: arc3.RunArc3(sudoku_easy))
+        toTime = Timer(lambda: arc3.RunArc3(sudoku_easy, True))
         time = toTime.timeit(number=1)
         print("Time: ", round(time, 3), "s")
         print("Iterations: ", arc3.iterations)
@@ -340,5 +351,5 @@ if (len(sys.argv) > 1):
         print("NOT SOLVED")
     else:
         print("SOLVED")
-
-
+    pprint.pprint(arc3.domain_sets)
+    pprint.pprint(arc3.domain_size)
