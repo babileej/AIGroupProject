@@ -43,7 +43,6 @@ def select_unassigned_variable(grid, domain_sets):
 				degree_count = 0
 				constraints = getConstraints(variable)
 				domain = domain_sets[i][j][:]
-				#print("for: " + str((i, j)) + " domain: " + str(domain))
 				for constraint in constraints:
 					row, col = constraint
 					val = grid[row][col]
@@ -54,9 +53,8 @@ def select_unassigned_variable(grid, domain_sets):
 						ind = l.index(val)
 						l[ind] = 0
 						domain = np.asarray(l)
-						#print("domain: " + str(domain_sets[i][j][:]))
-					domains[variable] = list(filter(lambda x: x > 0, domain.tolist()))
-					degrees[variable] = degree_count
+				domains[variable] = list(filter(lambda x: x > 0, domain.tolist()))
+				degrees[variable] = degree_count
 			j += 1
 		i += 1
 
