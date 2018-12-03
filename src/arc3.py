@@ -337,8 +337,8 @@ if (len(sys.argv) > 1):
         print("Time: ", round(time, 3), "s")
         print("Iterations: ", arc3.iterations)
     if (solver.misplaced_tiles(arc3.board) > 0):
-        print ("NOT SOLVED")
+        print("NOT SOLVED")
     else:
-        print ("SOLVED")
+        print("SOLVED")
 
 
